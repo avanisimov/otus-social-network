@@ -1,11 +1,15 @@
 package http
 
-import "github.com/go-chi/chi/v5"
+import (
+	"github.com/avanisimov/otus-social-network/internal/user"
 
-func NewRouter() *chi.Mux {
+	"github.com/go-chi/chi/v5"
+)
+
+func NewRouter(userService *user.Service) *chi.Mux {
 	r := chi.NewRouter()
 
-	h := NewHandler()
+	h := NewHandler(userService)
 
 	r.Post("/user/register", h.Register)
 	r.Get("/user/get/{id}", h.GetUser)
