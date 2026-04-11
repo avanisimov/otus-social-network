@@ -23,7 +23,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (*RegisterR
 		City:         req.City,
 		PasswordHash: hashPassword(req.Password),
 	}
-	userID, err := s.repo.CreateUser(user)
+	userID, err := s.repo.CreateUser(ctx, &user)
 	if err != nil {
 		return nil, err
 	}
@@ -35,14 +35,7 @@ func (s *Service) GetUser(ctx context.Context, userID string) (*User, error) {
 }
 
 func (s *Service) GetUserWithPassword(context context.Context, d string, password string) (*User, error) {
-	u, err := s.repo.GetUserByID(context, d)
-	if err != nil {
-		return nil, ErrUserNotFound
-	}
-	if hashPassword(password) != u.PasswordHash {
-		return nil, ErrInvalidPassword
-	}
-	return u, nil
+	return s.repo.GetUserByIAndPassword(context, d, hashPassword(password))
 }
 
 func hashPassword(s string) string {

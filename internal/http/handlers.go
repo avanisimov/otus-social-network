@@ -26,7 +26,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.userService.Register(r.Context(), req)
 	if err != nil {
-		http.Error(w, "cannot register", 500)
+		http.Error(w, "cannot register" + err.Error(), 500)
 		return
 	}
 
