@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/avanisimov/otus-social-network/internal/user"
+	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
@@ -32,8 +33,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok - get user"}`))
+	id := chi.URLParam(r, "id")
+
+	user, err := h.userService.GetUser(r.Context(), id)
+	if err != nil {
+		http.Error(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(user)
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {

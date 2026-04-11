@@ -30,6 +30,10 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (*RegisterR
 	return &RegisterResponse{UserID: userID}, nil
 }
 
+func (s *Service) GetUser(ctx context.Context, userID string) (*User, error) {
+	return s.repo.GetUserByID(ctx, userID)
+}
+
 func hashPassword(s string) string {
 	hash := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(hash[:])
