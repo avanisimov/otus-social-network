@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15
-    container_name: social_db
+    container_name: social_db_dev
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -10,8 +10,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
       - ../migrations:/docker-entrypoint-initdb.d
+      - pgdata_dev:/var/lib/postgresql/data
   pgadmin:
     image: dpage/pgadmin4
     container_name: social_pgadmin
@@ -32,5 +32,5 @@ services:
       - pgadmin_data:/var/lib/pgadmin
 
 volumes:
-  pgdata:
+  pgdata_dev:
   pgadmin_data:

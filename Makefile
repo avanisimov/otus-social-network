@@ -1,30 +1,36 @@
-.PHONY: build run test clean up down restart
+DEV_COMPOSE = docker/docker-compose.dev.yaml
+PROD_COMPOSE = docker/docker-compose.prod.yaml
 
-# Build the Go application
-build:
-	go build -o bin/app ./cmd
+.PHONY: dev-up dev-down dev-restart dev-logs
+.PHONY: prod-up prod-down prod-restart prod-logs
+.PHONY: migrate
 
-# Run the application
-run:
-	go run ./cmd
+## ---------------------------
+## Development
+## ---------------------------
 
-# Run tests
-test:
-	go test ./...
+dev-up:
+	docker compose -f $(DEV_COMPOSE) --env-file .env up -d
 
-# Clean build artifacts
-clean:
-	rm -rf bin/
+dev-down:
+	docker compose -f $(DEV_COMPOSE) --env-file .env down -v
 
-# Start services with Docker Compose
-up:
-	docker compose -f docker/docker-compose.local.yaml up -d
+dev-restart: dev-down dev-up
 
-# Stop services with Docker Compose
-down:
-	docker compose -f docker/docker-compose.local.yaml down
+dev-logs:
+	docker compose -f $(DEV_COMPOSE) logs -f db
 
-# Restart services with Docker Compose
-restart:
-	docker compose -f docker/docker-compose.local.yaml down
-	docker compose -f docker/docker-compose.local.yaml up -d
+## ---------------------------
+## Production
+## ---------------------------
+
+prod-up:
+	docker compose -f $(PROD_COMPOSE) up -d --build
+
+prod-down:
+	docker compose -f $(PROD_COMPOSE) down -v
+
+prod-restart: prod-down prod-up
+
+prod-logs:
+	docker compose -f $(PROD_COMPOSE) logs -f
