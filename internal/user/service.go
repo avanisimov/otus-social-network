@@ -34,6 +34,17 @@ func (s *Service) GetUser(ctx context.Context, userID string) (*User, error) {
 	return s.repo.GetUserByID(ctx, userID)
 }
 
+func (s *Service) GetUserWithPassword(context context.Context, d string, password string) (*User, error) {
+	u, err := s.repo.GetUserByID(context, d)
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
+	if hashPassword(password) != u.PasswordHash {
+		return nil, ErrInvalidPassword
+	}
+	return u, nil
+}
+
 func hashPassword(s string) string {
 	hash := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(hash[:])

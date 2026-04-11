@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/avanisimov/otus-social-network/internal/auth"
 	"github.com/avanisimov/otus-social-network/internal/user"
 	"github.com/go-chi/chi/v5"
 )
@@ -45,6 +46,18 @@ func (h *Handler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok - login"}`))
+	var req auth.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid body", 400)
+		return
+	}
+
+	u, err := h.userService.GetUserWithPassword(r.Context(), req.ID, req.Password)
+	if err != nil {
+		http.Error(w, "user not found", 404)
+		return
+	}
+
+	token, _ := auth.GenerateToken(u.ID)
+	json.NewEncoder(w).Encode(auth.LoginResponse{Token: token})
 }
