@@ -1,0 +1,89 @@
+{
+  "info": {
+    "_postman_id": "e529a641-ca1d-49f6-856d-110785d31b44",
+    "name": "SocialNetwork_Task1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "51609518",
+    "_collection_link": "https://go.postman.co/collection/51609518-e529a641-ca1d-49f6-856d-110785d31b44?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "CreateUser",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"first_name\": \"John\",\n    \"second_name\": \"Doe\",\n    \"birthdate\": \"1991-06-21\",\n    \"biography\": \"biography\",\n    \"city\": \"Moscow\",\n    \"password\": \"12321fbxnuem1\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/user/register",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "user",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GetUserById",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/user/get/22139187-a3c3-42c1-9da6-8034bf230b89",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "user",
+            "get",
+            "22139187-a3c3-42c1-9da6-8034bf230b89"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"id\": \"22139187-a3c3-42c1-9da6-8034bf230b89\",\n    \"password\": \"12321fbxnuem1\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/login",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "login"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
