@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func NewRouter(userService *user.Service) *chi.Mux {
+func NewRouter(userService *user.Service, db DB) *chi.Mux {
 	r := chi.NewRouter()
 
 	// Middleware to set Content-Type to application/json for all routes
@@ -20,9 +20,15 @@ func NewRouter(userService *user.Service) *chi.Mux {
 	})
 
 	h := NewHandler(userService)
+	healthHandler := NewHealthHandler(db)
+
+	r.Get("/healthz", healthHandler.Healthz)
+	r.Get("/readiness", healthHandler.Readiness)
+	r.Handle("/metrics", healthHandler.MetricsHandler())
 
 	r.Post("/user/register", h.Register)
 	r.Get("/user/get/{id}", h.GetUser)
+	r.Get("/users/search", h.SearchUsers)
 	r.Post("/login", h.Login)
 
 	return r

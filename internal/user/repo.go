@@ -15,6 +15,28 @@ func NewRepository(db *sql.DB) *Repository {
 	}
 }
 
+func (r *Repository) SearchUsers(context context.Context, first_name string, second_name string, limit int) ([]User, error) {
+	rows, err := r.db.QueryContext(context, `SELECT id, first_name, second_name, birthdate, biography, city FROM users WHERE first_name LIKE $1 AND second_name LIKE $2 LIMIT $3`, "%"+first_name+"%", "%"+second_name+"%", limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var u User
+		err := rows.Scan(&u.ID, &u.FirstName, &u.SecondName, &u.Birthdate, &u.Biography, &u.City)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+
+	return users, nil
+}
+
+
+
 func (r *Repository) GetUserByID(ctx context.Context, userID string) (*User, error) {
 	u := User{}
 	err := r.db.QueryRowContext(ctx, `SELECT id, first_name, second_name, birthdate, biography, city FROM users WHERE id=$1`, userID).

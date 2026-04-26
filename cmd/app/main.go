@@ -34,7 +34,7 @@ func main() {
 	userRepo := user.NewRepository(database)
 	userService := user.NewService(userRepo)
 
-	router := httpDelivery.NewRouter(userService)
+	router := httpDelivery.NewRouter(userService, database)
 
 	log.Println("Listening on :" + config.AppPort)
 	http.ListenAndServe(":" + config.AppPort, router)
