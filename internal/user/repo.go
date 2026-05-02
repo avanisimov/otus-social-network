@@ -16,7 +16,21 @@ func NewRepository(db *sql.DB) *Repository {
 }
 
 func (r *Repository) SearchUsers(context context.Context, first_name string, second_name string, limit int) ([]User, error) {
-	rows, err := r.db.QueryContext(context, `SELECT id, first_name, second_name, birthdate, biography, city FROM users WHERE first_name LIKE $1 AND second_name LIKE $2 LIMIT $3`, "%"+first_name+"%", "%"+second_name+"%", limit)
+	rows, err := r.db.QueryContext(context, `
+		SELECT 
+			id, first_name, second_name, birthdate, biography, city 
+		FROM 
+			users 
+		WHERE 
+			first_name ILIKE $1 || '%' 
+			AND 
+			second_name ILIKE $2 || '%' 
+		LIMIT 
+			$3`,
+		first_name,
+		second_name, 
+		limit,
+	)
 	if err != nil {
 		return nil, err
 	}
