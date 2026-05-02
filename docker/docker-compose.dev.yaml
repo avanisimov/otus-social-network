@@ -1,25 +1,177 @@
 services:
-  db:
+  pg-primary:
     image: postgres:15
-    container_name: social_db_dev
+    container_name: pg_primary
     restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: primpass
       POSTGRES_DB: social
     ports:
       - "5432:5432"
     volumes:
-      - ../migrations:/docker-entrypoint-initdb.d
-      - pgdata_dev:/var/lib/postgresql/data
-  pgadmin:
+      - primary_data:/var/lib/postgresql/data
+      - ./primary/init-primary.sh:/docker-entrypoint-initdb.d/init-primary.sh
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=10
+      -c hot_standby=on
+    networks:
+      - main_network
+  migrator:
+    image: migrate/migrate
+    container_name: migrator
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+    entrypoint: [ "/bin/sh", "-c" ]
+    command: >
+      "
+        echo 'waiting for postgres...';
+        until pg_isready -h pg-primary; do sleep 2; done;
+
+        echo 'checking migrations folder...';
+        ls -la /migrations;
+
+        echo 'running migrations...';
+        migrate -path=/migrations -database postgres://postgres:primpass@pg-primary:5432/social?sslmode=disable up
+      "
+    volumes:
+      - ./master/migrations:/migrations
+    networks:
+      - main_network
+  pg-replica-01:
+    image: postgres:15
+    container_name: pg_replica_01
+    restart: always
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: replpass
+    ports:
+      - "5433:5432"
+    volumes:
+      - replica01_data:/var/lib/postgresql/data
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: >
+      "
+        # Initialize replica if not already set up
+        if [ ! -s /var/lib/postgresql/data/PG_VERSION ]; then
+        echo 'Initializing replica from primary…'
+        until PGPASSWORD=replica_pass pg_basebackup -h pg-primary -U replicator -D /var/lib/postgresql/data -R -X stream -c fast -S replication_slot_1
+        do
+        echo 'Waiting for primary…'
+        sleep 2
+        done
+        echo 'Backup complete!'
+        fi
+        docker-entrypoint.sh postgres
+      "
+    networks:
+      - main_network
+  pg-replica-02:
+    image: postgres:15
+    container_name: pg_replica_02
+    restart: always
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: replpass
+    ports:
+      - "5434:5432"
+    volumes:
+      - replica02_data:/var/lib/postgresql/data
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: >
+      "
+        # Initialize replica if not already set up
+        if [ ! -s /var/lib/postgresql/data/PG_VERSION ]; then
+        echo 'Initializing replica from primary…'
+        until PGPASSWORD=replica_pass pg_basebackup -h pg-primary -U replicator -D /var/lib/postgresql/data -R -X stream -c fast -S replication_slot_2
+        do
+        echo 'Waiting for primary…'
+        sleep 2
+        done
+        echo 'Backup complete!'
+        fi
+        docker-entrypoint.sh postgres
+      "
+    networks:
+      - main_network
+  # ------------ PostgreSQL Exporters --------------
+  primary-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: primary_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:masterpass@pg-primary:5432/postgres?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - pg-primary
+    networks:
+      - main_network
+  replica01-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: replica01_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:slavepass@pg-replica-01:5433/postgres?sslmode=disable"
+    ports:
+      - "9188:9187"
+    depends_on:
+      - pg-replica-01
+    networks:
+      - main_network
+  replica02-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: replica02_exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:slavepass@pg-replica-02:5434/postgres?sslmode=disable"
+    ports:
+      - "9189:9187"
+    depends_on:
+      - pg-replica-02
+    networks:
+      - main_network
+  # ------------ Prometheus ------------------------
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - main_network
+
+  # ------------ Grafana ----------------------------
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    networks:
+      - main_network
+  # ------------ PG Admin ---------------------------
+  pg-admin:
     image: dpage/pgadmin4
-    container_name: social_pgadmin
+    container_name: pg_admin
     restart: always
     ports:
       - 5050:80
     environment:
-       # Required by pgAdmin
+      # Required by pgAdmin
       PGADMIN_DEFAULT_EMAIL: demo@example.com
       PGADMIN_DEFAULT_PASSWORD: secret
 
@@ -32,5 +184,10 @@ services:
       - pgadmin_data:/var/lib/pgadmin
 
 volumes:
-  pgdata_dev:
+  primary_data:
+  replica01_data:
+  replica02_data:
   pgadmin_data:
+
+networks:
+  main_network:

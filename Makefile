@@ -13,7 +13,7 @@ dev-up:
 	docker compose -f $(DEV_COMPOSE) --env-file .env up -d
 
 dev-down:
-	docker compose -f $(DEV_COMPOSE) --env-file .env down -v
+	docker compose -f $(DEV_COMPOSE) --env-file .env down
 
 dev-restart: dev-down dev-up
 
@@ -39,7 +39,7 @@ users-generate: $(VENV)/bin/activate
 export COUNT ?= 1000000
 export OUTPUT ?= $(USERS_CSV_FILE)
 
-DB_CONTAINER=social_db_dev
+DB_CONTAINER=pg_db_master
 DB_USER=postgres
 DB_NAME=social
 CSV_FILE=users.csv
