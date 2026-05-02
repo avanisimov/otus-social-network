@@ -26,7 +26,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.userService.Register(r.Context(), req)
 	if err != nil {
-		http.Error(w, "cannot register" + err.Error(), 500)
+		http.Error(w, "cannot register"+err.Error(), 500)
 		return
 	}
 
@@ -60,4 +60,22 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, _ := auth.GenerateToken(u.ID)
 	json.NewEncoder(w).Encode(auth.LoginResponse{Token: token})
+}
+
+func (h *Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	first_name := r.URL.Query().Get("first_name")
+	second_name := r.URL.Query().Get("second_name")
+	limit := getIntQuery(r, "limit", 10)
+	// For simplicity, we just return all users. In a real app, you'd implement search logic.
+	users, err := h.userService.SearchUsers(r.Context(), first_name, second_name, limit)
+	if err != nil {
+		http.Error(w, "cannot get users", 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(UsersSearchResponse{Users: users})
+}
+
+type UsersSearchResponse struct {
+	Users []user.User `json:"users"`
 }

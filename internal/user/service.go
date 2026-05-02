@@ -6,11 +6,22 @@ import (
 	"encoding/hex"
 )
 
-type Service struct {
-	repo *Repository
+type UsersRepository interface {
+	GetUserByID(context.Context, string) (*User, error)
+	GetUserByIAndPassword(context.Context, string, string) (*User, error)
+	CreateUser(context.Context, *User) (string, error)
+	SearchUsers(context.Context, string, string, int) ([]User, error)
 }
 
-func NewService(repo *Repository) *Service {
+type Service struct {
+	repo UsersRepository
+}
+
+func (s *Service) SearchUsers(context context.Context, first_name string, second_name string, limit int) ([]User, error) {
+	return s.repo.SearchUsers(context, first_name, second_name, limit)
+}
+
+func NewService(repo UsersRepository) *Service {
 	return &Service{repo: repo}
 }
 
