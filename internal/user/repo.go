@@ -25,6 +25,7 @@ func (r *Repository) SearchUsers(context context.Context, first_name string, sec
 			first_name ILIKE $1 || '%' 
 			AND 
 			second_name ILIKE $2 || '%' 
+		ORDER by id
 		LIMIT 
 			$3`,
 		first_name,
