@@ -39,7 +39,7 @@ users-generate: $(VENV)/bin/activate
 export COUNT ?= 1000000
 export OUTPUT ?= $(USERS_CSV_FILE)
 
-DB_CONTAINER=pg_db_master
+DB_CONTAINER=pg_primary
 DB_USER=postgres
 DB_NAME=social
 CSV_FILE=users.csv
