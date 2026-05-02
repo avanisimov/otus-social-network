@@ -34,7 +34,7 @@ services:
     command: >
       "
         echo 'waiting for postgres...';
-        until pg_isready -h pg-primary; do sleep 2; done;
+        sleep 2;
 
         echo 'checking migrations folder...';
         ls -la /migrations;
@@ -43,7 +43,7 @@ services:
         migrate -path=/migrations -database postgres://postgres:primpass@pg-primary:5432/social?sslmode=disable up
       "
     volumes:
-      - ./master/migrations:/migrations
+      - ./primary/migrations:/migrations
     networks:
       - main_network
   pg-replica-01:
